@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "75691016630",
+    "firebase_url": "https://flash-dc2da.firebaseio.com",
+    "project_id": "flash-dc2da",
+    "storage_bucket": "flash-dc2da.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75691016630:android:de43d45e3f4ae52c",
+        "android_client_info": {
+          "package_name": "com.example.manish.flash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "75691016630-adkiop0err5gpga0g6gkg82ofsu36ed8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.manish.flash",
+            "certificate_hash": "a16a1794267991e9100f6f029ca72fa328b130de"
+          }
+        },
+        {
+          "client_id": "75691016630-6c2qfcu0gavf5s7u5du0lnkh4nqktg1l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAc1glB4aLDibfDhaQQE1hUL4gDjrb7pl4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "75691016630-6c2qfcu0gavf5s7u5du0lnkh4nqktg1l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
