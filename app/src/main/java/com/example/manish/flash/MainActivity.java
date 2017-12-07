@@ -2,7 +2,6 @@ package com.example.manish.flash;
 
 import android.app.Dialog;
 import android.app.DownloadManager;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -38,7 +37,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
     Dialog dialog;
     Uri internalImg_Uri;
+    String date_toString;
 
     int MY_PERMISSIONS_REQUEST_READ_CONTACTS=121, MY_PERMISSIONS_REQUEST_CAMERA=122;
 
@@ -232,9 +235,6 @@ public class MainActivity extends AppCompatActivity {
                         final String imgURL = model.getImage();
                         final String position = String.valueOf(pos);
 
-                        final StorageReference delete_photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(imgURL);
-
-
                 vHolder.mView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -264,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
                                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
                                 request.setAllowedOverRoaming(false);
                                 request.setTitle("Downloading Image");
-                                request.setDescription("Android Data download using DownloadManager.");
+                                request.setDescription("");
 
                                 //request.setDestinationInExternalPublicDir(DIRECTORY_PICTURES,  "Flash/" + name);
                                 request.setDestinationInExternalPublicDir("Flash",name);
@@ -337,14 +337,14 @@ public class MainActivity extends AppCompatActivity {
 
                         vHolder.delete.setOnClickListener(new View.OnClickListener() {
                             @Override
-                            public void onClick(View v) {
+                            public void onClick(final View vi) {
                                 myDb_Ref.child(post_key).removeValue();
-
+                                final StorageReference delete_photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(imgURL);
                                 delete_photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
-                                        Toast.makeText(getApplicationContext(), "Post Removed",
-                                                Toast.LENGTH_SHORT).show();
+                                        Snackbar.make(vi, "Post Removed", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+
                                     }
                                 });
                             }
@@ -356,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private static class CardViewHolder extends RecyclerView.ViewHolder{
+   public static class CardViewHolder extends RecyclerView.ViewHolder{
         View mView;
         LinearLayout hidden_ll;
         TextView tv_download,tv_Send,tv_View;
@@ -375,13 +375,21 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        public void setDate(Long Date){
+        public void setDate(Long timestamp){
 
-            SimpleDateFormat sfd = new SimpleDateFormat("EEE, d MMM yyyy");
-            String date_toString = sfd.format(Date);
 
+            /*SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            sfd.format(new Date(timestamp));*/
             TextView date_view = (TextView) mView.findViewById(R.id.date);
-            date_view.setText(date_toString);
+
+            try {
+                SimpleDateFormat sfd = new SimpleDateFormat("EEE, d MMM yyyy");
+                String date_toString = sfd.format(timestamp);
+                date_view.setText(date_toString);
+            }catch (IllegalArgumentException e){
+
+            }
+
         }
 
         public void setName(String Name){
@@ -425,7 +433,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-                //TODO Close button action
             }
         });
 

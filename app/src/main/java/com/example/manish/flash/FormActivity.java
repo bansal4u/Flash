@@ -1,15 +1,24 @@
 package com.example.manish.flash;
 
+import android.*;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -26,10 +35,16 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class FormActivity extends AppCompatActivity {
 
-    private TextInputLayout name,age,gender,eye,details;
+    private TextInputLayout name,age,details;
     private ImageView imageview;
     private Button post_btn;
     private TextView selectImgText;
@@ -41,6 +56,7 @@ public class FormActivity extends AppCompatActivity {
 
     private int PICK_IMAGE_CAMERA = 1;
     private int PICK_IMAGE_GALLERY = 2;
+    public static final int MEDIA_TYPE_IMAGE = 3;
     private static final String IMAGE_DIRECTORY = "/Flash";
     private Uri imageURI;
     private Uri Cropped_ImageURI;
@@ -50,6 +66,13 @@ public class FormActivity extends AppCompatActivity {
     DatabaseReference db_ref;
 
     private ProgressDialog mProgressDialog;
+    int MY_PERMISSIONS_REQUEST_READ_CONTACTS=121, MY_PERMISSIONS_REQUEST_CAMERA=122;
+
+
+
+    Uri mCropImageUri;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +84,6 @@ public class FormActivity extends AppCompatActivity {
 
         name = (TextInputLayout) findViewById(R.id.name);
         age = (TextInputLayout) findViewById(R.id.age);
-        //eye = (TextInputLayout) findViewById(R.id.eye);
-        //gender = (TextInputLayout) findViewById(R.id.gender);
         details = (TextInputLayout) findViewById(R.id.details);
 
         selectImgText  =(TextView)findViewById(R.id.selectImgText);
@@ -77,11 +98,15 @@ public class FormActivity extends AppCompatActivity {
         radioGender = (RadioGroup)findViewById(R.id.radioGender);
         radioEye = (RadioGroup)findViewById(R.id.radioEye);
 
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         imageview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                selectImage();
+                CropImage.activity()
+                        .setGuidelines(CropImageView.Guidelines.ON)
+                        .start(FormActivity.this)     ;
+                //selectImage();
             }
         });
 
@@ -92,6 +117,64 @@ public class FormActivity extends AppCompatActivity {
                 startPosting();
             }
         });
+        checkPermission();
+
+    }
+
+    public void checkPermission(){
+
+        //Write External Storage Permission
+        if (ContextCompat.checkSelfPermission(FormActivity.this,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(FormActivity.this,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(FormActivity.this,
+                        new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
+
+
+        //Camera Permission
+        if (ContextCompat.checkSelfPermission(FormActivity.this,
+                android.Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(FormActivity.this,
+                    android.Manifest.permission.CAMERA)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(FormActivity.this,
+                        new String[]{android.Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
 
     }
 
@@ -118,8 +201,8 @@ public class FormActivity extends AppCompatActivity {
                     Intent takePictureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
                     if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
 
-                        startActivityForResult(takePictureIntent, PICK_IMAGE_CAMERA);
                     }
+                    startActivityForResult(takePictureIntent, PICK_IMAGE_CAMERA);
 
                 }
 
@@ -132,35 +215,7 @@ public class FormActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == this.RESULT_CANCELED) {
-            return;
-        }
-        if (requestCode == PICK_IMAGE_GALLERY) {
-            if (data != null) {
-                imageURI = data.getData();
 
-                CropImage.activity(imageURI).start(this);
-
-                /*try {
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Cropped_ImageURI);
-                    //String path = saveImage(bitmap);
-                    imageview.setImageBitmap(bitmap);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(FormActivity.this, "Failed!", Toast.LENGTH_SHORT).show();
-                }*/
-            }
-
-        } else if (requestCode == PICK_IMAGE_CAMERA) {
-            imageURI = data.getData();
-            CropImage.activity(imageURI).start(this);
-
-            //Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-            //imageview.setImageBitmap(thumbnail);
-            //saveImage(thumbnail);
-            //Toast.makeText(FormActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
-        }
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             if (resultCode == RESULT_OK) {
@@ -174,37 +229,40 @@ public class FormActivity extends AppCompatActivity {
 
         }
     }
-   /*public String saveImage(Bitmap myBitmap) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        //myBitmap.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
-        File wallpaperDirectory = new File(
-                Environment.getExternalStorageDirectory() + IMAGE_DIRECTORY);
-        // have the object build the directory structure, if needed.
-        if (!wallpaperDirectory.exists()) {
-            wallpaperDirectory.mkdirs();
-        }
 
-        try {
-            File f = new File(wallpaperDirectory, Calendar.getInstance()
-                    .getTimeInMillis() + ".jpg");
-            f.createNewFile();
-            FileOutputStream fo = new FileOutputStream(f);
-            fo.write(bytes.toByteArray());
-            MediaScannerConnection.scanFile(this,
-                    new String[]{f.getPath()},
-                    new String[]{"image/jpeg"}, null);
-            fo.close();
-            Log.d("TAG", "File Saved::--->" + f.getAbsolutePath());
-
-            return f.getAbsolutePath();
-        } catch (IOException e1) {
-            e1.printStackTrace();
+   /*@Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == this.RESULT_CANCELED) {return;}
+        if (requestCode == PICK_IMAGE_GALLERY) {
+            if (data != null) {
+                imageURI = data.getData();
+                CropImage.activity(imageURI).start(this);}
+        } else if (requestCode == PICK_IMAGE_CAMERA) {
+            imageURI = data.getData();
+            CropImage.activity(imageURI).start(this);}
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                Cropped_ImageURI = result.getUri();
+                imageview.setImageURI(Cropped_ImageURI);
+                selectImgText.setText("Image Ready to Send");
+                selectImgText.setTextColor(getResources().getColor(R.color.colorAccent));}
         }
-        return "";
     }*/
 
-    //------- POSTING DATA --------------
+    private static String setFileName() {
 
+        // Creating a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
+                Locale.getDefault()).format(new Date());
+        String mediaFile = "Flash_" + timeStamp ;
+
+        return mediaFile;
+    }
+
+
+    //------- POSTING DATA --------------
     private void startPosting() {
 
         //GENDER RADIO
@@ -228,7 +286,7 @@ public class FormActivity extends AppCompatActivity {
         mProgressDialog.show();
 
 
-        StorageReference filePath = mStorageRef.child("Images").child(ServerValue.TIMESTAMP + ".jpg");
+        StorageReference filePath = mStorageRef.child("Images").child(setFileName() + ".jpg");
         filePath.putFile(Cropped_ImageURI).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -263,6 +321,8 @@ public class FormActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
 }
 
